@@ -240,6 +240,14 @@ In each case you should carefully consider how visitor functors (the callable
 visitor) and the variant's value are forwarded.
 
 
+## What's missing
+
+- Strong Exception Guarantees
+- Proper SFINAE Handling
+
+
+
+
 ## Final Code
 
 By now, our variant can hold any type, and invoke the visitor in as few

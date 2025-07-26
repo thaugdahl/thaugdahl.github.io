@@ -470,6 +470,11 @@ cases:</p>
 </ol>
 <p>In each case you should carefully consider how visitor functors (the callable
 visitor) and the variant&rsquo;s value are forwarded.</p>
+<h2 id="whats-missing">What&rsquo;s missing</h2>
+<ul>
+<li>Strong Exception Guarantees</li>
+<li>Proper SFINAE Handling</li>
+</ul>
 <h2 id="final-code">Final Code</h2>
 <p>By now, our variant can hold any type, and invoke the visitor in as few
 indirections as we can get without digging into the compiler&rsquo;s internals.
@@ -497,6 +502,7 @@ compiler support.</p>
         <li><a href="#visitation">Visitation</a></li>
       </ul>
     </li>
+    <li><a href="#whats-missing">What&rsquo;s missing</a></li>
     <li><a href="#final-code">Final Code</a></li>
   </ul>
 </nav>
