@@ -1,10 +1,14 @@
 +++
 date = '2025-07-26T23:34:30+02:00'
-draft = true
+draft = false
 title = 'C++ Variant From Scratch'
 +++
 
 # C++ Variant From Scratch
+
+
+> **NOTE**: As of 26. july, this post is still incomplete. I'm sure I'll get
+around to it eventually. Don't expect any kind of mind-blowing writing prowess to shine through just yet.
 
 For quite some time now, I've been wanting to do a full-scale implementation
 of `std::variant` from scratch. Why would you want to put yourself through
@@ -56,12 +60,153 @@ class Variant {
 
 *Note*: In retrospect, I should have used `std::byte` instead of `char`. The two are close to equivalent (`std::byte` is unsigned), but `std::byte` is more descriptive.
 
-#### Assignment
+#### Initialization
 
+Every constructor and assignment is templated, and receives a specific type. If we want to be able to associated a unique identifier
+with each type of the variant, we have to ascertain its position in the top-level parameter pack.
 
+The templated utility class below will help us do so. It iteratively pops one type off the front of a pack until it encounters the
+desired type, at which point the value, or index, will be computed.
+
+```cpp
+template <class Desired, class... Types>
+struct TypeIndex;
+
+template <class Desired, class... Types>
+struct TypeIndex<Desired, Desired, Types...> {
+    static constexpr std::size_t value = 0;
+};
+
+template <class Desired, class First, class... Types>
+struct TypeIndex<Desired, First, Types...> {
+    static constexpr std::size_t value = 1 + TypeIndex<Desired, Types...>::value;
+};
+
+template <class Desired>
+struct TypeIndex<Desired> {
+    static_assert(!is_same<Desired, Desired>::value, "Can't find type in types pack");
+};
+```
+
+In addition, we are going to need the following utility as well:
+
+```cpp
+template <std::size_t Index, class... Types>
+struct TypeAt;
+
+template <class First, class... Types>
+struct TypeAt<0, First, Types...> {
+    using type = First;
+};
+
+template <std::size_t Index, class First, class... Types>
+struct TypeAt<Index, First, Types...> {
+    using type = typename TypeAt<Index-1, Types...>::type;
+};
+```
+
+Now there are some more things to contend with. The first type of a variant should
+be default constructible. If we instantiate a variant without an initializer,
+we default back to default-instantiating the first type in the variant's type pack.
+
+```cpp
+Variant() {
+    using FirstType = typename TypeAt<0, Types...>::type;
+    new (storage) FirstType{};
+    active_index = 0;
+}
+
+template <class T>
+Variant(T &&value) {
+    static constexpr std::size_t type_index = TypeIndex<T, Types...>::value;
+    new (&storage) T{std::forward<T>(value)};
+    active_index = type_index;
+}
+
+template <class T>
+void set(T &&value) {
+    static constexpr std::size_t type_index = TypeIndex<T, Types...>::value;
+    // Clean up previously held resource
+    destroy();
+
+    new (&storage) T{std::forward<T>(value)};
+    active_index = type_index;
+}
+```
+
+Assignment will now ensure that the variant's active index correctly identifies
+the contained type in the variant. There is one piece of functionality here that
+isn't clearly explained yet -- the call to `destroy()`. Let's get into it.
 
 #### Destruction
 
+Our variant type should be able to correctly free its held resources. If the
+active type of the variant holds resources, we want to make sure we're respecting
+its destructor as well.
+
+The following code makes sure to create a dispatch table that ensures minimal
+indirection to invoke the held type's destructor. Since we already have the
+`active_index`, we can use it to directly index into a table of destructor
+handlers.
+
+Each handler will make sure to cast the storage pointer to a pointer of the
+actual held object, and thereby invoke the correct destructor.
+
+*Note*: `IndexSequence` and `MakeIndexSequence` are unnecesarily hand-rolled
+implementations of `std::index_sequence`. See [this file](https://github.com/thaugdahl/variant-v2/blob/main/type_utils.hpp) for its
+implementation.
+
+```cpp
+void destroy() {
+    static constexpr auto destructor_table = create_destructor_table();
+    if ( is_valueless() ) return;
+    destructor_table[active_index](storage);
+    active_index = sizeof...(Types);
+}
+
+static constexpr auto create_destructor_table() {
+    return create_destructor_table_impl(MakeIndexSequence<sizeof...(Types)>{});
+}
+
+template <std::size_t... Indices>
+static constexpr auto create_destructor_table_impl(IndexSequence<Indices...>) {
+    return std::array<void (*)(char *), sizeof...(Indices)> {
+        [](char *data) {
+            using ActiveType = typename TypeAt<Indices, Types...>::type;
+            reinterpret_cast<ActiveType*>(data)->~ActiveType();
+        }...
+    };
+}
+
+~Variant() { destroy(); }
+```
+
+The *magic*, if you want to call it that, happens in the `create_destructor_table_impl` function.
+It uses a clever *index sequence* to properly index into the variadic type pack.
+There are two key features of this function that drives the whole dispatch machinery:
+
+1. An array of indexed lambda functions, where
+2. each function casts the storage to the correct type
+
+Notice the last ellipsis at the end of the lambda function. The pack expansion
+will ensure that the `Indices` pack, which remains unexpanded inside the
+`TypeAt` selection, is expaned over the entirety of the lambda definition. As
+such, we are left with as many lambda functions as there are indices in the
+`Indices` pack.
+
+
+Now that we have type-safe destruction, we can safely instantiate, and destroy
+a variant. This on its own isn't too interesting. Let's see how we can get
+around to actually *using* the data, shall we?
+
+#### Value and Move Semantics
+
+Variants should be possible to both copy (if its held types permits), and move.
+The implementation herein uses many of the tricks that apply to generating
+destructor tables and visitation dispatch tables as can be seen both above and below.
+
+For brevity's sake, take a look at the copy and move constructors and
+assignment operators in the [code repo](https://github.com/thaugdahl/variant-v2/blob/main/main.cpp).
 
 
 ### Visitation
@@ -74,311 +219,33 @@ Cppreference has the following notes for `std::visit`
 >
 > On typical implementations, the time complexity of the invocation of v can be considered equal to that of access to an element in an (possibly multidimensional) array or execution of a switch statement.
 
-Here is the crux of our manual implementation, we are not implementing core compiler support for a variant, we are merely implementing a faximile of the real deal. The compiler may do a myriad transformations to the original visitation to the point where it boils down to a simple switch statement. We will mimic this behavior using a compile-time generated dispatch table.
+Here is the crux of our manual implementation, we are not implementing core
+compiler support for a variant, we are merely implementing a faximile of the
+real deal. The compiler may do a myriad transformations to the original
+visitation to the point where it boils down to a simple switch statement. We
+will mimic this behavior using a compile-time generated dispatch table.
 
 #### Dispatch Table
 
-If you want to be completely cv- and ref-qualified for your visitation dispatch, you're going to need multiple dispatch tables. Here are the needed cases:
+If you want to be completely cv- and ref-qualified for your visitation
+dispatch, you're going to need multiple dispatch tables. Here are the needed
+cases:
 
 1. Const lvalue (`const A &`)
 2. Const rvalue (`const A &&`)
 3. Non-const lvalue (`A &`)
 4. Non-const rvalue (`A &&`)
 
-In each case you should carefully consider
-
-
+In each case you should carefully consider how visitor functors (the callable
+visitor) and the variant's value are forwarded.
 
 
 ## Final Code
 
+By now, our variant can hold any type, and invoke the visitor in as few
+indirections as we can get without digging into the compiler's internals.
+In real-world projects, use `std::variant` instead of our bastardized variant,
+as you will most certainly get an implementation that is battle-tested and has
+compiler support.
+
 The complete repository can be found on [GitHub](https://github.com/thaugdahl/variant-v2).
-
-```cpp
-template <class... Types>
-class Variant {
-
-    using Self = Variant<Types...>;
-
-    static constexpr std::size_t MaxSize = std::max({sizeof(Types)...});
-    static constexpr std::size_t MaxAlign = std::max({alignof(Types)...});
-
-    alignas(MaxAlign) char storage[MaxSize];
-
-    std::size_t active_index;
-
-    void destroy() {
-        static constexpr auto destructor_table = create_destructor_table();
-        if ( is_valueless() ) return;
-        destructor_table[active_index](storage);
-        active_index = sizeof...(Types);
-    }
-
-
-public:
-
-    ~Variant() { destroy(); }
-
-    Variant() {
-        using FirstType = typename TypeAt<0, Types...>::type;
-        new (storage) FirstType{};
-        active_index = 0;
-    }
-
-    template <class T>
-    Variant(T &&value) {
-        static constexpr std::size_t type_index = TypeIndex<T, Types...>::value;
-        new (&storage) T{std::forward<T>(value)};
-        active_index = type_index;
-    }
-
-    template <class T>
-    void set(T &&value) {
-        static constexpr std::size_t type_index = TypeIndex<T, Types...>::value;
-        // Clean up previously held resource
-        destroy();
-
-        new (&storage) T{std::forward<T>(value)};
-        active_index = type_index;
-    }
-
-
-private:
-
-    static constexpr auto create_destructor_table() {
-        return create_destructor_table_impl(MakeIndexSequence<sizeof...(Types)>{});
-    }
-
-    template <std::size_t... Indices>
-    static constexpr auto create_destructor_table_impl(IndexSequence<Indices...>) {
-        return std::array<void (*)(char *), sizeof...(Indices)> {
-            [](char *data) {
-                using ActiveType = typename TypeAt<Indices, Types...>::type;
-                reinterpret_cast<ActiveType*>(data)->~ActiveType();
-            }...
-        };
-    }
-
-
-    static constexpr auto create_mover_dispatch_table() {
-        return create_mover_dispatch_table_impl(MakeIndexSequence<sizeof...(Types)>{});
-    }
-
-    template <std::size_t... Indices>
-    static constexpr auto create_mover_dispatch_table_impl(IndexSequence<Indices...>) {
-        return std::array<void (*)(char *, char *), sizeof...(Indices)> {
-            [] (char *other, char *own) {
-                using ActiveType = typename TypeAt<Indices, Types...>::type;
-                ActiveType &other_ref = *reinterpret_cast<ActiveType *>(other);
-
-                // Placement new is necessary. Our storage will be in an uninitialized state.
-                new (own) ActiveType{std::move(other_ref)};
-            }...
-        };
-    }
-
-    static constexpr auto create_copier_dispatch_table() {
-        return create_copier_dispatch_table_impl(MakeIndexSequence<sizeof...(Types)>{});
-    }
-
-    template <std::size_t... Indices>
-    static constexpr auto create_copier_dispatch_table_impl(IndexSequence<Indices...>) {
-        return std::array<void (*)(const char *, char *), sizeof...(Indices)> {
-            [] (const char *other, char *own) {
-                using ActiveType = typename TypeAt<Indices, Types...>::type;
-                const ActiveType &other_ref = *reinterpret_cast<const ActiveType *>(other);
-
-                // Placement new is necessary. Our storage will be in an uninitialized state.
-                new (own) ActiveType{other_ref};
-            }...
-        };
-    }
-
-    static constexpr auto mover_dispatch_table = create_mover_dispatch_table();
-    static constexpr auto copier_dispatch_table = create_copier_dispatch_table();
-
-private:
-
-
-  template <class Visitor>
-  static constexpr auto make_visitor_dispatch_table_lvalue() {
-    return make_visitor_dispatch_table_lvalue_impl<Visitor>(
-        MakeIndexSequence<sizeof...(Types)>{});
-  }
-
-  template <class Visitor, std::size_t... Indices>
-  static constexpr auto make_visitor_dispatch_table_lvalue_impl(IndexSequence<Indices...>) {
-    using RetType =
-        typename FunctorReturnType<Visitor,
-                                   typename TypeAt<0, Types...>::type>::type;
-
-    return std::array<RetType (*)(char *, Visitor &&), sizeof...(Indices)>{
-        [](char *data, Visitor &&v) {
-          using ActiveType = typename TypeAt<Indices, Types...>::type;
-          return std::forward<Visitor>(v)(*reinterpret_cast<ActiveType *>(data));
-        }...};
-  }
-
-  template <class Visitor>
-  static constexpr auto make_visitor_dispatch_table_const_lvalue() {
-    return make_visitor_dispatch_table_const_lvalue_impl<Visitor>(
-        MakeIndexSequence<sizeof...(Types)>{});
-  }
-
-  template <class Visitor, std::size_t... Indices>
-  static constexpr auto
-  make_visitor_dispatch_table_const_lvalue_impl(IndexSequence<Indices...>) {
-
-    using RetType =
-        typename FunctorReturnType<Visitor,
-                                   typename TypeAt<0, Types...>::type>::type;
-
-    return std::array<RetType (*)(const char *, Visitor &&), sizeof...(Indices)>{
-        [](const char *data, Visitor &&v) {
-          using ActiveType = typename TypeAt<Indices, Types...>::type;
-          return std::forward<Visitor>(v)(*reinterpret_cast<const ActiveType *>(data));
-        }...};
-  }
-
-  template <class Visitor>
-  static constexpr auto make_visitor_dispatch_table_rvalue() {
-    return make_visitor_dispatch_table_rvalue_impl<Visitor>(
-        MakeIndexSequence<sizeof...(Types)>{});
-  }
-
-  template <class Visitor, std::size_t... Indices>
-  static constexpr auto make_visitor_dispatch_table_rvalue_impl(IndexSequence<Indices...>) {
-    using RetType =
-        typename FunctorReturnType<Visitor,
-                                   typename TypeAt<0, Types...>::type>::type;
-
-    return std::array<RetType (*)(char *, Visitor &&), sizeof...(Indices)>{
-        [](char *data, Visitor &&v) {
-          using ActiveType = typename TypeAt<Indices, Types...>::type;
-          return std::forward<Visitor>(v)(std::move(*reinterpret_cast<ActiveType *>(data)));
-        }...};
-  }
-
-  template <class Visitor>
-  static constexpr auto make_visitor_dispatch_table_const_rvalue() {
-    return make_visitor_dispatch_table_const_rvalue_impl<Visitor>(
-        MakeIndexSequence<sizeof...(Types)>{});
-  }
-
-  template <class Visitor, std::size_t... Indices>
-  static constexpr auto
-  make_visitor_dispatch_table_const_rvalue_impl(IndexSequence<Indices...>) {
-
-    using RetType =
-        typename FunctorReturnType<Visitor,
-                                   typename TypeAt<0, Types...>::type>::type;
-
-    return std::array<RetType (*)(const char *, Visitor &&), sizeof...(Indices)>{
-        [](const char *data, Visitor &&v) {
-          using ActiveType = typename TypeAt<Indices, Types...>::type;
-          return std::forward<Visitor>(v)(std::move(*reinterpret_cast<const ActiveType *>(data)));
-        }...};
-  }
-
-public:
-
-    template <class Visitor>
-    decltype(auto)
-    visit(Visitor &&v) & {
-
-        if ( is_valueless() ) {
-            throw std::runtime_error{"Invalid variant access. Valueless."};
-        }
-
-        static constexpr auto dispatch_table_lvalue =
-            make_visitor_dispatch_table_lvalue<Visitor>();
-        return dispatch_table_lvalue[active_index](storage,
-                                                   std::forward<Visitor>(v));
-    }
-
-    template <class Visitor>
-    decltype(auto) visit(Visitor &&v) && {
-
-        if ( is_valueless() ) {
-            throw std::runtime_error{"Invalid variant access. Valueless."};
-        }
-
-        static constexpr auto dispatch_table_rvalue =
-            make_visitor_dispatch_table_rvalue<Visitor>();
-        return dispatch_table_rvalue[active_index](storage,
-                                                   std::forward<Visitor>(v));
-    }
-
-    template <class Visitor>
-    typename FunctorReturnType<Visitor, typename TypeAt<0, Types...>::type>::type
-    visit(Visitor &&v) const & {
-
-        if ( is_valueless() ) {
-            throw std::runtime_error{"Invalid variant access. Valueless."};
-        }
-
-        static constexpr auto dispatch_table_const_lvalue =
-            make_visitor_dispatch_table_const_lvalue<Visitor>();
-        return dispatch_table_const_lvalue[active_index](
-            storage, std::forward<Visitor>(v));
-    }
-
-    template <class Visitor>
-    typename FunctorReturnType<Visitor, typename TypeAt<0, Types...>::type>::type
-    visit(Visitor &&v) const && {
-
-        if ( is_valueless() ) {
-            throw std::runtime_error{"Invalid variant access. Valueless."};
-        }
-
-        static constexpr auto dispatch_table_const_rvalue =
-            make_visitor_dispatch_table_const_rvalue<Visitor>();
-        return dispatch_table_const_rvalue[active_index](
-            storage, std::forward<Visitor>(v));
-    }
-
-
-
-    Variant(Variant<Types...> &&other) {
-        mover_dispatch_table[other.active_index](other.storage, storage);
-        active_index = other.active_index;
-        other.destroy();
-    }
-
-    Self &operator=(Self &&other) {
-        destroy();
-        mover_dispatch_table[other.active_index](other.storage, storage);
-        active_index = other.active_index;
-        other.destroy();
-
-        return *this;
-    }
-
-    Variant(const Self &other) {
-        copier_dispatch_table[other.active_index](other.storage, storage);
-        active_index = other.active_index;
-    }
-
-    Self &operator=(const Self &other) {
-        destroy();
-        copier_dispatch_table[other.active_index](other.storage, storage);
-        active_index = other.active_index;
-        return *this;
-    }
-
-    const bool is_valueless() const {
-        return active_index == sizeof...(Types);
-    }
-
-    std::size_t index() const {
-        return active_index;
-    }
-
-    template <class TypeT>
-    bool holds_alternative() const {
-        return active_index == TypeIndex<TypeT, Types...>::value;
-    }
-
-
-};
-```

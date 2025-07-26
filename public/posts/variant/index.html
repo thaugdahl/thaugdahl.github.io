@@ -31,7 +31,8 @@
 <meta property="og:url" content="//localhost:1313/posts/variant/">
   <meta property="og:site_name" content="Tor Andre Haugdahl">
   <meta property="og:title" content="C&#43;&#43; Variant From Scratch">
-  <meta property="og:description" content="C&#43;&#43; Variant From Scratch For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
+  <meta property="og:description" content="C&#43;&#43; Variant From Scratch NOTE: As of 26. july, this post is still incomplete. I’m sure I’ll get around to it eventually. Don’t expect any kind of mind-blowing writing prowess to shine through just yet.
+For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
 Your understanding of the STL deepens. Your template metaprogramming chops get their much needed exercise. You get your chance to make your sacrifice to the ever-benevolent standards library devs. By the end of this exercise you’re likely going to fall into one of two categories (insert there are 10 kinds of people joke here):">
   <meta property="og:locale" content="en_us">
   <meta property="og:type" content="article">
@@ -42,7 +43,8 @@ Your understanding of the STL deepens. Your template metaprogramming chops get t
 
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="C&#43;&#43; Variant From Scratch">
-  <meta name="twitter:description" content="C&#43;&#43; Variant From Scratch For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
+  <meta name="twitter:description" content="C&#43;&#43; Variant From Scratch NOTE: As of 26. july, this post is still incomplete. I’m sure I’ll get around to it eventually. Don’t expect any kind of mind-blowing writing prowess to shine through just yet.
+For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
 Your understanding of the STL deepens. Your template metaprogramming chops get their much needed exercise. You get your chance to make your sacrifice to the ever-benevolent standards library devs. By the end of this exercise you’re likely going to fall into one of two categories (insert there are 10 kinds of people joke here):">
 
 
@@ -284,6 +286,9 @@ C&#43;&#43; Variant From Scratch | Tor Andre Haugdahl
           
           <article class="page-content  p-2">
           <h1 id="c-variant-from-scratch">C++ Variant From Scratch</h1>
+<blockquote>
+<p><strong>NOTE</strong>: As of 26. july, this post is still incomplete. I&rsquo;m sure I&rsquo;ll get
+around to it eventually. Don&rsquo;t expect any kind of mind-blowing writing prowess to shine through just yet.</p></blockquote>
 <p>For quite some time now, I&rsquo;ve been wanting to do a full-scale implementation
 of <code>std::variant</code> from scratch. Why would you want to put yourself through
 the torment, you ask? Here&rsquo;s what I say:</p>
@@ -323,313 +328,156 @@ largest of the types in the pack, and maintains the maximum alignment.</p>
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e">//...
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
 </span></span></code></pre></div><p><em>Note</em>: In retrospect, I should have used <code>std::byte</code> instead of <code>char</code>. The two are close to equivalent (<code>std::byte</code> is unsigned), but <code>std::byte</code> is more descriptive.</p>
-<h4 id="assignment">Assignment</h4>
+<h4 id="initialization">Initialization</h4>
+<p>Every constructor and assignment is templated, and receives a specific type. If we want to be able to associated a unique identifier
+with each type of the variant, we have to ascertain its position in the top-level parameter pack.</p>
+<p>The templated utility class below will help us do so. It iteratively pops one type off the front of a pack until it encounters the
+desired type, at which point the value, or index, will be computed.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, Desired, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> TypeIndex<span style="color:#f92672">&lt;</span>Desired, Types...<span style="color:#f92672">&gt;::</span>value;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static_assert</span>(<span style="color:#f92672">!</span>is_same<span style="color:#f92672">&lt;</span>Desired, Desired<span style="color:#f92672">&gt;::</span>value, <span style="color:#e6db74">&#34;Can&#39;t find type in types pack&#34;</span>);
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>In addition, we are going to need the following utility as well:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> First;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span>Index, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Index<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, Types...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>Now there are some more things to contend with. The first type of a variant should
+be default constructible. If we instantiate a variant without an initializer,
+we default back to default-instantiating the first type in the variant&rsquo;s type pack.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>Variant() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> FirstType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> (storage) FirstType{};
+</span></span><span style="display:flex;"><span>    active_index <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">T</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>Variant(T <span style="color:#f92672">&amp;&amp;</span>value) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t type_index <span style="color:#f92672">=</span> TypeIndex<span style="color:#f92672">&lt;</span>T, Types...<span style="color:#f92672">&gt;::</span>value;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> (<span style="color:#f92672">&amp;</span>storage) T{std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>(value)};
+</span></span><span style="display:flex;"><span>    active_index <span style="color:#f92672">=</span> type_index;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">T</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> set(T <span style="color:#f92672">&amp;&amp;</span>value) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t type_index <span style="color:#f92672">=</span> TypeIndex<span style="color:#f92672">&lt;</span>T, Types...<span style="color:#f92672">&gt;::</span>value;
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Clean up previously held resource
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    destroy();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">new</span> (<span style="color:#f92672">&amp;</span>storage) T{std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>(value)};
+</span></span><span style="display:flex;"><span>    active_index <span style="color:#f92672">=</span> type_index;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Assignment will now ensure that the variant&rsquo;s active index correctly identifies
+the contained type in the variant. There is one piece of functionality here that
+isn&rsquo;t clearly explained yet &ndash; the call to <code>destroy()</code>. Let&rsquo;s get into it.</p>
 <h4 id="destruction">Destruction</h4>
+<p>Our variant type should be able to correctly free its held resources. If the
+active type of the variant holds resources, we want to make sure we&rsquo;re respecting
+its destructor as well.</p>
+<p>The following code makes sure to create a dispatch table that ensures minimal
+indirection to invoke the held type&rsquo;s destructor. Since we already have the
+<code>active_index</code>, we can use it to directly index into a table of destructor
+handlers.</p>
+<p>Each handler will make sure to cast the storage pointer to a pointer of the
+actual held object, and thereby invoke the correct destructor.</p>
+<p><em>Note</em>: <code>IndexSequence</code> and <code>MakeIndexSequence</code> are unnecesarily hand-rolled
+implementations of <code>std::index_sequence</code>. See <a href="https://github.com/thaugdahl/variant-v2/blob/main/type_utils.hpp">this file</a> for its
+implementation.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">destroy</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> destructor_table <span style="color:#f92672">=</span> create_destructor_table();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> ( is_valueless() ) <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>    destructor_table[active_index](storage);
+</span></span><span style="display:flex;"><span>    active_index <span style="color:#f92672">=</span> <span style="color:#66d9ef">sizeof</span>...(Types);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> <span style="color:#a6e22e">create_destructor_table</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> create_destructor_table_impl(MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> create_destructor_table_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType<span style="color:#f92672">*&gt;</span>(data)<span style="color:#f92672">-&gt;~</span>ActiveType();
+</span></span><span style="display:flex;"><span>        }...
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">~</span>Variant() { destroy(); }
+</span></span></code></pre></div><p>The <em>magic</em>, if you want to call it that, happens in the <code>create_destructor_table_impl</code> function.
+It uses a clever <em>index sequence</em> to properly index into the variadic type pack.
+There are two key features of this function that drives the whole dispatch machinery:</p>
+<ol>
+<li>An array of indexed lambda functions, where</li>
+<li>each function casts the storage to the correct type</li>
+</ol>
+<p>Notice the last ellipsis at the end of the lambda function. The pack expansion
+will ensure that the <code>Indices</code> pack, which remains unexpanded inside the
+<code>TypeAt</code> selection, is expaned over the entirety of the lambda definition. As
+such, we are left with as many lambda functions as there are indices in the
+<code>Indices</code> pack.</p>
+<p>Now that we have type-safe destruction, we can safely instantiate, and destroy
+a variant. This on its own isn&rsquo;t too interesting. Let&rsquo;s see how we can get
+around to actually <em>using</em> the data, shall we?</p>
+<h4 id="value-and-move-semantics">Value and Move Semantics</h4>
+<p>Variants should be possible to both copy (if its held types permits), and move.
+The implementation herein uses many of the tricks that apply to generating
+destructor tables and visitation dispatch tables as can be seen both above and below.</p>
+<p>For brevity&rsquo;s sake, take a look at the copy and move constructors and
+assignment operators in the <a href="https://github.com/thaugdahl/variant-v2/blob/main/main.cpp">code repo</a>.</p>
 <h3 id="visitation">Visitation</h3>
 <p>Cppreference has the following notes for <code>std::visit</code></p>
 <blockquote>
 <p>Let n be (1 * &hellip; * <code>std::variant_size_v&lt;std::remove_reference_t&lt;VariantBases&gt;&gt;</code>), implementations usually generate a table equivalent to an (possibly multidimensional) array of n function pointers for every specialization of std::visit, which is similar to the implementation of virtual functions.</p>
 <p>Implementations may also generate a switch statement with n branches for std::visit (e.g., the MSVC STL implementation uses a switch statement when n is not greater than 256).</p>
 <p>On typical implementations, the time complexity of the invocation of v can be considered equal to that of access to an element in an (possibly multidimensional) array or execution of a switch statement.</p></blockquote>
-<p>Here is the crux of our manual implementation, we are not implementing core compiler support for a variant, we are merely implementing a faximile of the real deal. The compiler may do a myriad transformations to the original visitation to the point where it boils down to a simple switch statement. We will mimic this behavior using a compile-time generated dispatch table.</p>
+<p>Here is the crux of our manual implementation, we are not implementing core
+compiler support for a variant, we are merely implementing a faximile of the
+real deal. The compiler may do a myriad transformations to the original
+visitation to the point where it boils down to a simple switch statement. We
+will mimic this behavior using a compile-time generated dispatch table.</p>
 <h4 id="dispatch-table">Dispatch Table</h4>
-<p>If you want to be completely cv- and ref-qualified for your visitation dispatch, you&rsquo;re going to need multiple dispatch tables. Here are the needed cases:</p>
+<p>If you want to be completely cv- and ref-qualified for your visitation
+dispatch, you&rsquo;re going to need multiple dispatch tables. Here are the needed
+cases:</p>
 <ol>
 <li>Const lvalue (<code>const A &amp;</code>)</li>
 <li>Const rvalue (<code>const A &amp;&amp;</code>)</li>
 <li>Non-const lvalue (<code>A &amp;</code>)</li>
 <li>Non-const rvalue (<code>A &amp;&amp;</code>)</li>
 </ol>
-<p>In each case you should carefully consider</p>
+<p>In each case you should carefully consider how visitor functors (the callable
+visitor) and the variant&rsquo;s value are forwarded.</p>
 <h2 id="final-code">Final Code</h2>
+<p>By now, our variant can hold any type, and invoke the visitor in as few
+indirections as we can get without digging into the compiler&rsquo;s internals.
+In real-world projects, use <code>std::variant</code> instead of our bastardized variant,
+as you will most certainly get an implementation that is battle-tested and has
+compiler support.</p>
 <p>The complete repository can be found on <a href="https://github.com/thaugdahl/variant-v2">GitHub</a>.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Variant</span> {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> Self <span style="color:#f92672">=</span> Variant<span style="color:#f92672">&lt;</span>Types...<span style="color:#f92672">&gt;</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t MaxSize <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>max({<span style="color:#66d9ef">sizeof</span>(Types)...});
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t MaxAlign <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>max({<span style="color:#66d9ef">alignof</span>(Types)...});
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">alignas</span>(MaxAlign) <span style="color:#66d9ef">char</span> storage[MaxSize];
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>size_t active_index;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">destroy</span>() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> destructor_table <span style="color:#f92672">=</span> create_destructor_table();
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( is_valueless() ) <span style="color:#66d9ef">return</span>;
-</span></span><span style="display:flex;"><span>        destructor_table[active_index](storage);
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> <span style="color:#66d9ef">sizeof</span>...(Types);
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#f92672">~</span>Variant() { destroy(); }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    Variant() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">using</span> FirstType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> (storage) FirstType{};
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">T</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    Variant(T <span style="color:#f92672">&amp;&amp;</span>value) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t type_index <span style="color:#f92672">=</span> TypeIndex<span style="color:#f92672">&lt;</span>T, Types...<span style="color:#f92672">&gt;::</span>value;
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> (<span style="color:#f92672">&amp;</span>storage) T{std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>(value)};
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> type_index;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">T</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">void</span> set(T <span style="color:#f92672">&amp;&amp;</span>value) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t type_index <span style="color:#f92672">=</span> TypeIndex<span style="color:#f92672">&lt;</span>T, Types...<span style="color:#f92672">&gt;::</span>value;
-</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Clean up previously held resource
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        destroy();
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">new</span> (<span style="color:#f92672">&amp;</span>storage) T{std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>(value)};
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> type_index;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> create_destructor_table() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">create_destructor_table_impl</span>(MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> create_destructor_table_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>            [](<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data) {
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType<span style="color:#f92672">*&gt;</span>(data)<span style="color:#f92672">-&gt;~</span>ActiveType();
-</span></span><span style="display:flex;"><span>            }...
-</span></span><span style="display:flex;"><span>        };
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> <span style="color:#a6e22e">create_mover_dispatch_table</span>() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> create_mover_dispatch_table_impl(MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> create_mover_dispatch_table_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>            [] (<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>other, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>own) {
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>                ActiveType <span style="color:#f92672">&amp;</span>other_ref <span style="color:#f92672">=</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType <span style="color:#f92672">*&gt;</span>(other);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Placement new is necessary. Our storage will be in an uninitialized state.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">new</span> (own) ActiveType{std<span style="color:#f92672">::</span>move(other_ref)};
-</span></span><span style="display:flex;"><span>            }...
-</span></span><span style="display:flex;"><span>        };
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> <span style="color:#a6e22e">create_copier_dispatch_table</span>() {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> create_copier_dispatch_table_impl(MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> create_copier_dispatch_table_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span> (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>            [] (<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>other, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>own) {
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">const</span> ActiveType <span style="color:#f92672">&amp;</span>other_ref <span style="color:#f92672">=</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">const</span> ActiveType <span style="color:#f92672">*&gt;</span>(other);
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// Placement new is necessary. Our storage will be in an uninitialized state.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">new</span> (own) ActiveType{other_ref};
-</span></span><span style="display:flex;"><span>            }...
-</span></span><span style="display:flex;"><span>        };
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> mover_dispatch_table <span style="color:#f92672">=</span> create_mover_dispatch_table();
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> copier_dispatch_table <span style="color:#f92672">=</span> create_copier_dispatch_table();
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_lvalue() {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> make_visitor_dispatch_table_lvalue_impl<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(
-</span></span><span style="display:flex;"><span>        MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span>, std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_lvalue_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> RetType <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor,
-</span></span><span style="display:flex;"><span>                                   <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span>RetType (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, Visitor <span style="color:#f92672">&amp;&amp;</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span>{
-</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data, Visitor <span style="color:#f92672">&amp;&amp;</span>v) {
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v)(<span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType <span style="color:#f92672">*&gt;</span>(data));
-</span></span><span style="display:flex;"><span>        }...};
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_const_lvalue() {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> make_visitor_dispatch_table_const_lvalue_impl<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(
-</span></span><span style="display:flex;"><span>        MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span>, std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span>
-</span></span><span style="display:flex;"><span>  make_visitor_dispatch_table_const_lvalue_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> RetType <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor,
-</span></span><span style="display:flex;"><span>                                   <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span>RetType (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, Visitor <span style="color:#f92672">&amp;&amp;</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span>{
-</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data, Visitor <span style="color:#f92672">&amp;&amp;</span>v) {
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v)(<span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">const</span> ActiveType <span style="color:#f92672">*&gt;</span>(data));
-</span></span><span style="display:flex;"><span>        }...};
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_rvalue() {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> make_visitor_dispatch_table_rvalue_impl<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(
-</span></span><span style="display:flex;"><span>        MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span>, std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_rvalue_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> RetType <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor,
-</span></span><span style="display:flex;"><span>                                   <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span>RetType (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, Visitor <span style="color:#f92672">&amp;&amp;</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span>{
-</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data, Visitor <span style="color:#f92672">&amp;&amp;</span>v) {
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v)(std<span style="color:#f92672">::</span>move(<span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType <span style="color:#f92672">*&gt;</span>(data)));
-</span></span><span style="display:flex;"><span>        }...};
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_const_rvalue() {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> make_visitor_dispatch_table_const_rvalue_impl<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(
-</span></span><span style="display:flex;"><span>        MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span>, std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span>
-</span></span><span style="display:flex;"><span>  make_visitor_dispatch_table_const_rvalue_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> RetType <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor,
-</span></span><span style="display:flex;"><span>                                   <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span>RetType (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, Visitor <span style="color:#f92672">&amp;&amp;</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span>{
-</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">const</span> <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data, Visitor <span style="color:#f92672">&amp;&amp;</span>v) {
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>          <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v)(std<span style="color:#f92672">::</span>move(<span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span><span style="color:#66d9ef">const</span> ActiveType <span style="color:#f92672">*&gt;</span>(data)));
-</span></span><span style="display:flex;"><span>        }...};
-</span></span><span style="display:flex;"><span>  }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">decltype</span>(<span style="color:#66d9ef">auto</span>)
-</span></span><span style="display:flex;"><span>    visit(Visitor <span style="color:#f92672">&amp;&amp;</span>v) <span style="color:#f92672">&amp;</span> {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( is_valueless() ) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>runtime_error{<span style="color:#e6db74">&#34;Invalid variant access. Valueless.&#34;</span>};
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> dispatch_table_lvalue <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>            make_visitor_dispatch_table_lvalue<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>();
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dispatch_table_lvalue[active_index](storage,
-</span></span><span style="display:flex;"><span>                                                   std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v));
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">decltype</span>(<span style="color:#66d9ef">auto</span>) visit(Visitor <span style="color:#f92672">&amp;&amp;</span>v) <span style="color:#f92672">&amp;&amp;</span> {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( is_valueless() ) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>runtime_error{<span style="color:#e6db74">&#34;Invalid variant access. Valueless.&#34;</span>};
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> dispatch_table_rvalue <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>            make_visitor_dispatch_table_rvalue<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>();
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dispatch_table_rvalue[active_index](storage,
-</span></span><span style="display:flex;"><span>                                                   std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v));
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor, <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type
-</span></span><span style="display:flex;"><span>    visit(Visitor <span style="color:#f92672">&amp;&amp;</span>v) <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span> {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( is_valueless() ) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>runtime_error{<span style="color:#e6db74">&#34;Invalid variant access. Valueless.&#34;</span>};
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> dispatch_table_const_lvalue <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>            make_visitor_dispatch_table_const_lvalue<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>();
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dispatch_table_const_lvalue[active_index](
-</span></span><span style="display:flex;"><span>            storage, std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v));
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor, <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type
-</span></span><span style="display:flex;"><span>    visit(Visitor <span style="color:#f92672">&amp;&amp;</span>v) <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;&amp;</span> {
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> ( is_valueless() ) {
-</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>runtime_error{<span style="color:#e6db74">&#34;Invalid variant access. Valueless.&#34;</span>};
-</span></span><span style="display:flex;"><span>        }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> dispatch_table_const_rvalue <span style="color:#f92672">=</span>
-</span></span><span style="display:flex;"><span>            make_visitor_dispatch_table_const_rvalue<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>();
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> dispatch_table_const_rvalue[active_index](
-</span></span><span style="display:flex;"><span>            storage, std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v));
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    Variant(Variant<span style="color:#f92672">&lt;</span>Types...<span style="color:#f92672">&gt;</span> <span style="color:#f92672">&amp;&amp;</span>other) {
-</span></span><span style="display:flex;"><span>        mover_dispatch_table[other.active_index](other.storage, storage);
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> other.active_index;
-</span></span><span style="display:flex;"><span>        other.destroy();
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    Self <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">operator</span><span style="color:#f92672">=</span>(Self <span style="color:#f92672">&amp;&amp;</span>other) {
-</span></span><span style="display:flex;"><span>        destroy();
-</span></span><span style="display:flex;"><span>        mover_dispatch_table[other.active_index](other.storage, storage);
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> other.active_index;
-</span></span><span style="display:flex;"><span>        other.destroy();
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">this</span>;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    Variant(<span style="color:#66d9ef">const</span> Self <span style="color:#f92672">&amp;</span>other) {
-</span></span><span style="display:flex;"><span>        copier_dispatch_table[other.active_index](other.storage, storage);
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> other.active_index;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    Self <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">operator</span><span style="color:#f92672">=</span>(<span style="color:#66d9ef">const</span> Self <span style="color:#f92672">&amp;</span>other) {
-</span></span><span style="display:flex;"><span>        destroy();
-</span></span><span style="display:flex;"><span>        copier_dispatch_table[other.active_index](other.storage, storage);
-</span></span><span style="display:flex;"><span>        active_index <span style="color:#f92672">=</span> other.active_index;
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> <span style="color:#f92672">*</span><span style="color:#66d9ef">this</span>;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">const</span> <span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">is_valueless</span>() <span style="color:#66d9ef">const</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> active_index <span style="color:#f92672">==</span> <span style="color:#66d9ef">sizeof</span>...(Types);
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>size_t index() <span style="color:#66d9ef">const</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> active_index;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TypeT</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">bool</span> holds_alternative() <span style="color:#66d9ef">const</span> {
-</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">return</span> active_index <span style="color:#f92672">==</span> TypeIndex<span style="color:#f92672">&lt;</span>TypeT, Types...<span style="color:#f92672">&gt;::</span>value;
-</span></span><span style="display:flex;"><span>    }
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></div>
+
           </article>
         </div>
       </div>
@@ -763,12 +611,10 @@ largest of the types in the pack, and maintains the maximum alignment.</p>
                     </a>
                     <div class="card-text secondary-font">
                         <p><h1 id="c-variant-from-scratch">C++ Variant From Scratch</h1>
-<p>For quite some time now, I&rsquo;ve been wanting to do a full-scale implementation
-of <code>std::variant</code> from scratch. Why would you want to put yourself through
-the torment, you ask? Here&rsquo;s what I say:</p>
-<ol>
-<li>Your understanding of the STL deepens.</li>
-<li>Your template metaprogramming …</li></ol></p>
+<blockquote>
+<p><strong>NOTE</strong>: As of 26. july, this post is still incomplete. I&rsquo;m sure I&rsquo;ll get
+around to it eventually. Don&rsquo;t expect any kind of mind-blowing writing prowess to shine through just yet.</p></blockquote>
+<p>For quite some time now, I&rsquo;ve been wanting to do a full-scale …</p></p>
                     </div>
                 </div>
                 <div class="mt-auto card-footer">
