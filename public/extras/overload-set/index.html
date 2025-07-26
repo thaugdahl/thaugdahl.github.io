@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="X-UA-Compatible" content="ie=edge">
+<meta http-equiv="Accept-CH" content="DPR, Viewport-Width, Width">
+<link rel="icon" href=/fav.png type="image/gif">
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Alata&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+>
+<link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Alata&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+      media="print" onload="this.media='all'" />
+<noscript>
+  <link
+          href="https://fonts.googleapis.com/css2?family=Alata&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap"
+          rel="stylesheet">
+</noscript>
+
+
+<link rel="stylesheet" href="/css/font.css" media="all">
+
+
+
+<meta property="og:url" content="//localhost:1313/extras/overload-set/">
+  <meta property="og:site_name" content="Tor Andre Haugdahl">
+  <meta property="og:title" content="Overload Set">
+  <meta property="og:description" content="Overload Set An overload set is, essentially, a candidate set of functions that can be invoked on a given argument. See overload resolution.
+Simple definition Note that this simplified example doesn’t consider inherited types, and low-cost implicit conversions. Refer to the rules of overload resolution for specific rules motivating overload selection.
+struct my_specific_overload_set { // (1) int operator()(const A &amp;a) { /* Do something with a const A*/ } // (2) int operator()(B &amp;b) { /* Do something with a B*/ } // (3) int operator()(C c) { /* Do something with a copied or pure A*/ } // (4) Sink function, accepts everything else template &lt;class T&gt; int operator()(T &amp;&amp;other) { /* Do something with a perfect-forwarded T */ } }; int main() { A a; B b; C c; D d; my_specific_overload_set f{}; f(a); // (1) f(b); // (2) f(c); // (3) f(d); // (4) f(A{}); // (4) } Automatic overload set (≥ C&#43;&#43;17) Since C&#43;&#43;17 bestowed variadic using statements on us, an automatic overload set is very simply defined as:">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="extras">
+    <meta property="article:published_time" content="2025-07-26T23:43:19+02:00">
+    <meta property="article:modified_time" content="2025-07-26T23:43:19+02:00">
+
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Overload Set">
+  <meta name="twitter:description" content="Overload Set An overload set is, essentially, a candidate set of functions that can be invoked on a given argument. See overload resolution.
+Simple definition Note that this simplified example doesn’t consider inherited types, and low-cost implicit conversions. Refer to the rules of overload resolution for specific rules motivating overload selection.
+struct my_specific_overload_set { // (1) int operator()(const A &amp;a) { /* Do something with a const A*/ } // (2) int operator()(B &amp;b) { /* Do something with a B*/ } // (3) int operator()(C c) { /* Do something with a copied or pure A*/ } // (4) Sink function, accepts everything else template &lt;class T&gt; int operator()(T &amp;&amp;other) { /* Do something with a perfect-forwarded T */ } }; int main() { A a; B b; C c; D d; my_specific_overload_set f{}; f(a); // (1) f(b); // (2) f(c); // (3) f(d); // (4) f(A{}); // (4) } Automatic overload set (≥ C&#43;&#43;17) Since C&#43;&#43;17 bestowed variadic using statements on us, an automatic overload set is very simply defined as:">
+
+
+<link rel="stylesheet" href="/bootstrap-5/css/bootstrap.min.css" media="all"><link rel="stylesheet" href="/css/header.css" media="all">
+<link rel="stylesheet" href="/css/footer.css" media="all">
+
+
+<link rel="stylesheet" href="/css/theme.css" media="all">
+
+<style>
+    :root {
+        --text-color: #343a40;
+        --text-secondary-color: #6c757d;
+        --text-link-color: #007bff;
+        --background-color: #eaedf0;
+        --secondary-background-color: #64ffda1a;
+        --primary-color: #007bff;
+        --secondary-color: #f8f9fa;
+
+         
+        --text-color-dark: #e4e6eb;
+        --text-secondary-color-dark: #b0b3b8;
+        --text-link-color-dark: #ffffff;
+        --background-color-dark: #18191a;
+        --secondary-background-color-dark: #212529;
+        --primary-color-dark: #ffffff;
+        --secondary-color-dark: #212529;
+    }
+    body {
+        font-size: 1rem;
+        font-weight: 400;
+        line-height: 1.5;
+        text-align: left;
+    }
+
+    html {
+        background-color: var(--background-color) !important;
+    }
+
+    body::-webkit-scrollbar {
+        height: 0px;
+        width: 8px;
+        background-color: var(--background-color);
+    }
+
+    ::-webkit-scrollbar-track {
+        border-radius: 1rem;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        border-radius: 1rem;
+        background: #b0b0b0;
+        outline: 1px solid var(--background-color);
+    }
+
+    #search-content::-webkit-scrollbar {
+        width: .5em;
+        height: .1em;
+        background-color: var(--background-color);
+    }
+</style>
+
+
+
+<meta name="description" content="">
+<link rel="stylesheet" href="/css/single.css">
+
+
+<script defer src="/fontawesome-6/all-6.4.2.js"></script>
+
+
+  
+  
+
+  <title>
+Overload Set | Tor Andre Haugdahl
+
+  </title>
+</head>
+
+<body class="light">
+  
+  
+<script>
+    let localStorageValue = localStorage.getItem("pref-theme");
+    let mediaQuery = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    switch (localStorageValue) {
+        case "dark":
+            document.body.classList.add('dark');
+            break;
+        case "light":
+            document.body.classList.remove('dark');
+            break;
+        default:
+            if (mediaQuery) {
+                document.body.classList.add('dark');
+            }
+            break;
+    }
+</script>
+
+
+
+
+<script>
+    var prevScrollPos = window.pageYOffset;
+    window.addEventListener("scroll", function showHeaderOnScroll() {
+        let profileHeaderElem = document.getElementById("profileHeader");
+        let currentScrollPos = window.pageYOffset;
+        let resetHeaderStyle = false;
+        let showNavBarOnScrollUp =  true ;
+        let showNavBar = showNavBarOnScrollUp ? prevScrollPos > currentScrollPos : currentScrollPos > 0;
+        if (showNavBar) {
+            profileHeaderElem.classList.add("showHeaderOnTop");
+        } else {
+            resetHeaderStyle = true;
+        }
+        if(currentScrollPos === 0) {
+            resetHeaderStyle = true;
+        }
+        if(resetHeaderStyle) {
+            profileHeaderElem.classList.remove("showHeaderOnTop");
+        }
+        prevScrollPos = currentScrollPos;
+    });
+</script>
+
+
+
+<header id="profileHeader">
+    <nav class="pt-3 navbar navbar-expand-lg ">
+        <div class="container-fluid mx-xs-2 mx-sm-5 mx-md-5 mx-lg-5">
+            
+            <a class="navbar-brand primary-font text-wrap" href="//localhost:1313/">
+                
+                Tor Andre Haugdahl
+                
+            </a>
+
+            
+
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+                <svg aria-hidden="true" height="24" viewBox="0 0 16 16" version="1.1" width="24" data-view-component="true">
+                    <path fill-rule="evenodd" d="M1 2.75A.75.75 0 011.75 2h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 2.75zm0 5A.75.75 0 011.75 7h12.5a.75.75 0 110 1.5H1.75A.75.75 0 011 7.75zM1.75 12a.75.75 0 100 1.5h12.5a.75.75 0 100-1.5H1.75z"></path>
+                </svg>
+            </button>
+
+            
+            <div class="collapse navbar-collapse text-wrap primary-font" id="navbarContent">
+                <ul class="navbar-nav ms-auto text-center">
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                    <li class="nav-item navbar-text">
+                        <a class="nav-link" href="//localhost:1313/#projects"
+                            aria-label="projects">
+                            Projects
+                        </a>
+                    </li>
+                    
+
+                    
+
+                    
+
+                    
+
+                    
+                    
+                    
+                    
+                    <li class="nav-item navbar-text">
+                        <a class="nav-link" href="/posts" title="Blog posts">
+                            
+                            Blog
+                        </a>
+                    </li>
+                    
+                    
+
+                    
+                    <li class="nav-item navbar-text">
+                        
+                        <div class="text-center">
+                            <button id="theme-toggle">
+                                <svg id="moon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                                </svg>
+                                <svg id="sun" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="5"></circle>
+                                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                                </svg>
+                            </button>
+                        </div>
+                    </li>
+                    
+
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+</header>
+<div id="content">
+<section id="single">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-sm-12 col-md-12 col-lg-9">
+        <div class="pr-lg-4">
+          <div class="title mb-5">
+            <h1 class="text-center mb-4">Overload Set</h1>
+            <div class="text-center">
+              
+              Jul 26, 2025
+
+              
+              <span id="readingTime">
+                min read
+              </span>
+              
+            </div>
+          </div>
+          
+          <article class="page-content  p-2">
+          <h1 id="overload-set">Overload Set</h1>
+<p>An overload set is, essentially, a candidate set of functions that can be invoked
+on a given argument. See <a href="https://en.cppreference.com/w/cpp/language/overload_resolution.html">overload resolution</a>.</p>
+<h2 id="simple-definition">Simple definition</h2>
+<p>Note that this simplified example doesn&rsquo;t consider inherited types, and low-cost implicit conversions. Refer to the rules of <a href="https://en.cppreference.com/w/cpp/language/overload_resolution.html">overload resolution</a> for specific rules motivating overload selection.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">my_specific_overload_set</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// (1)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">operator</span>()(<span style="color:#66d9ef">const</span> A <span style="color:#f92672">&amp;</span>a) { <span style="color:#75715e">/* Do something with a const A*/</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// (2)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">operator</span>()(B <span style="color:#f92672">&amp;</span>b) { <span style="color:#75715e">/* Do something with a B*/</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// (3)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">operator</span>()(C c) { <span style="color:#75715e">/* Do something with a copied or pure A*/</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// (4) Sink function, accepts everything else
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">T</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">operator</span>()(T <span style="color:#f92672">&amp;&amp;</span>other) { <span style="color:#75715e">/* Do something with a perfect-forwarded T */</span> }
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    A a;
+</span></span><span style="display:flex;"><span>    B b;
+</span></span><span style="display:flex;"><span>    C c;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    D d;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    my_specific_overload_set f{};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    f(a); <span style="color:#75715e">// (1)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    f(b); <span style="color:#75715e">// (2)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    f(c); <span style="color:#75715e">// (3)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    f(d); <span style="color:#75715e">// (4)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    f(A{}); <span style="color:#75715e">// (4)
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h2 id="automatic-overload-set--c17">Automatic overload set (≥ C++17)</h2>
+<p>Since C++17 bestowed variadic using statements on us, an automatic overload set
+is very simply defined as:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Fs</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">overload_set</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">public</span> Fs... {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> Fs<span style="color:#f92672">::</span><span style="color:#66d9ef">operator</span>()...;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    overload_set(Fs <span style="color:#f92672">&amp;&amp;</span>...fs) <span style="color:#f92672">:</span> Fs{std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Fs<span style="color:#f92672">&gt;</span>(fs)}... {}
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>You may have to explicitate a deduction guide for this, but this is, in
+essence, an overload set that can be instantiated with any number of
+non-conflicting lambdas and function pointers.</p>
+<p>You could also use the older style explicit function to aid deduction:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Fs</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span> make_overload(Fs <span style="color:#f92672">&amp;&amp;</span>...fs)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span>(std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Fs<span style="color:#f92672">&gt;</span>(fs)...);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="automatic-overload-set--c17-1">Automatic overload set (&lt; C++17)</h2>
+<p>Observe the following code for a recursive definition that yields the same
+functionality as the C++17 example.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Fs</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">overload_set</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">F1</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Fs</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">overload_set</span><span style="color:#f92672">&lt;</span>F1, Fs...<span style="color:#f92672">&gt;</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">public</span> F1, <span style="color:#66d9ef">public</span> overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> F1<span style="color:#f92672">::</span><span style="color:#66d9ef">operator</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;::</span><span style="color:#66d9ef">operator</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    overload_set(F1 <span style="color:#f92672">&amp;&amp;</span>f1, Fs <span style="color:#f92672">&amp;&amp;</span> ...fs)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">noexcept</span>(std<span style="color:#f92672">::</span>is_nothrow_move_constructible<span style="color:#f92672">&lt;</span>F1<span style="color:#f92672">&gt;::</span>value <span style="color:#f92672">&amp;&amp;</span>
+</span></span><span style="display:flex;"><span>                std<span style="color:#f92672">::</span>is_nothrow_move_constructible<span style="color:#f92672">&lt;</span>overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;&gt;::</span>value)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">:</span> F1(std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>F1<span style="color:#f92672">&gt;</span>(f1)), overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span>(std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Fs<span style="color:#f92672">&gt;</span>(fs)...)
+</span></span><span style="display:flex;"><span>    {}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">F1</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">overload_set</span><span style="color:#f92672">&lt;</span>F1<span style="color:#f92672">&gt;</span> <span style="color:#f92672">:</span> <span style="color:#66d9ef">public</span> F1
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> F1<span style="color:#f92672">::</span><span style="color:#66d9ef">operator</span>();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    overload_set(F1 <span style="color:#f92672">&amp;&amp;</span>f1)
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">noexcept</span>(std<span style="color:#f92672">::</span>is_nothrow_move_constructible<span style="color:#f92672">&lt;</span>F1<span style="color:#f92672">&gt;::</span>value)
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">:</span> F1(std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>F1<span style="color:#f92672">&gt;</span>(f1))
+</span></span><span style="display:flex;"><span>    {}
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Fs</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span> make_overload(Fs <span style="color:#f92672">&amp;&amp;</span>...fs)
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> overload_set<span style="color:#f92672">&lt;</span>Fs...<span style="color:#f92672">&gt;</span>(std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Fs<span style="color:#f92672">&gt;</span>(fs)...);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>The &ldquo;trick&rdquo;, if you will, that the using declaration for the nested overload
+set will pull in all the constituent function call operator overloads from it.
+In total, the topmost instance will thus hold all function call operators and
+form a full overload set.</p>
+
+          </article>
+        </div>
+      </div>
+      <div class="col-sm-12 col-md-12 col-lg-3">
+        <div id="stickySideBar" class="sticky-sidebar">
+          
+          <aside class="toc">
+              <h5>
+                Table Of Contents
+              </h5>
+              <div class="toc-content">
+                <nav id="TableOfContents">
+  <ul>
+    <li><a href="#simple-definition">Simple definition</a></li>
+    <li><a href="#automatic-overload-set--c17">Automatic overload set (≥ C++17)</a></li>
+    <li><a href="#automatic-overload-set--c17-1">Automatic overload set (&lt; C++17)</a></li>
+  </ul>
+</nav>
+              </div>
+          </aside>
+          
+
+          
+
+          
+          <aside class="social">
+            <h5>Social</h5>
+            <div class="social-content">
+              <ul class="list-inline">
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&url=%2f%2flocalhost%3a1313%2fextras%2foverload-set%2f">
+                    <i class="fab fa-linkedin"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://twitter.com/share?text=Overload%20Set&url=%2f%2flocalhost%3a1313%2fextras%2foverload-set%2f">
+                    <i class="fab fa-twitter"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href="https://api.whatsapp.com/send?text=Overload%20Set: %2f%2flocalhost%3a1313%2fextras%2foverload-set%2f">
+                    <i class="fab fa-whatsapp"></i>
+                  </a>
+                </li>
+                <li class="list-inline-item text-center">
+                  <a target="_blank" href='mailto:?subject=Overload%20Set&amp;body=Check%20out%20this%20site %2f%2flocalhost%3a1313%2fextras%2foverload-set%2f'>
+                    <i class="fa fa-envelope"></i>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </aside>
+          
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-sm-12 col-md-12 col-lg-9 p-4">
+        
+      </div>
+    </div>
+  </div>
+  <button class="p-2 px-3" onclick="topFunction()" id="topScroll">
+    <i class="fas fa-angle-up"></i>
+  </button>
+</section>
+
+
+<div class="progress">
+  <div id="scroll-progress-bar" class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+<Script src="/js/scrollProgressBar.js"></script>
+
+
+<script>
+  var topScroll = document.getElementById("topScroll");
+  window.onscroll = function() {scrollFunction()};
+
+  function scrollFunction() {
+    if (document.body.scrollTop > 20 || document.documentElement.scrollTop > 20) {
+      topScroll.style.display = "block";
+    } else {
+      topScroll.style.display = "none";
+    }
+  }
+
+  function topFunction() {
+    document.body.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+  }
+
+  
+  let stickySideBarElem = document.getElementById("stickySideBar");
+  let stickyNavBar =  true ;
+  if(stickyNavBar) {
+    let headerElem = document.getElementById("profileHeader");
+    let headerHeight = headerElem.offsetHeight + 15;
+    stickySideBarElem.style.top = headerHeight + "px";
+  } else {
+    stickySideBarElem.style.top = "50px";
+  }
+</script>
+
+
+<script src="/js/readingTime.js"></script>
+
+
+
+  </div><footer>
+    
+ 
+ 
+<div class="container py-3" id="recent-posts">
+    
+    
+    <div class="h3 text-center text-secondary py-3">
+        Recent Posts
+    </div>
+    <div class="row justify-content-center">
+        
+        <div class="col-lg-4 col-md-6 pt-2">
+            <div class="card h-100">
+                
+                <div class="card-body bg-transparent p-3 shadow-sm">
+                    <a href="/posts/variant/" class="primary-font card-title">
+                        <h5 class="card-title bg-transparent" title="C&#43;&#43; Variant From Scratch">C++ Variant From Scratch</h5>
+                    </a>
+                    <div class="card-text secondary-font">
+                        <p><h1 id="c-variant-from-scratch">C++ Variant From Scratch</h1>
+<p>For quite some time now, I&rsquo;ve been wanting to do a full-scale implementation
+of <code>std::variant</code> from scratch. Why would you want to put yourself through
+the torment, you ask? Here&rsquo;s what I say:</p>
+<ol>
+<li>Your understanding of the STL deepens.</li>
+<li>Your template metaprogramming …</li></ol></p>
+                    </div>
+                </div>
+                <div class="mt-auto card-footer">
+                    <span class="float-start">July 26, 2025</span>
+                    <a href="/posts/variant/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4 col-md-6 pt-2">
+            <div class="card h-100">
+                
+                <div class="card-body bg-transparent p-3 shadow-sm">
+                    <a href="/posts/hello/" class="primary-font card-title">
+                        <h5 class="card-title bg-transparent" title="Hello">Hello</h5>
+                    </a>
+                    <div class="card-text secondary-font">
+                        <p><h1 id="introduction">Introduction</h1>
+<p>Welcome to my humble technical blog.</p>
+<h2 id="cpp-code-fence-test">CPP Code Fence Test</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t index <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+ …</span></span></span></span></span></span></span></span></span></span></span></span></span></code></pre></div></p>
+                    </div>
+                </div>
+                <div class="mt-auto card-footer">
+                    <span class="float-start">July 26, 2025</span>
+                    <a href="/posts/hello/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+</div>
+
+<div class="text-center pt-2">
+    
+
+    
+
+    
+
+    
+
+    
+</div><div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-4 text-center">
+            
+            &copy; 2025  All Rights Reserved
+            <div class="text-secondary">
+                Made with
+                <span class="text-danger">
+                    &#10084;
+                </span>
+                and
+                <a href="https://github.com/gurusabarish/hugo-profile" target="_blank"
+                    title="Designed and developed by gurusabarish">
+                    Hugo Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+</footer><script src="/bootstrap-5/js/bootstrap.bundle.min.js"></script>
+<script>
+    if (localStorage.getItem("pref-theme") === "dark") {
+        document.body.classList.add('dark');
+    } else if (localStorage.getItem("pref-theme") === "light") {
+        document.body.classList.remove('dark')
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.body.classList.add('dark');
+    }
+
+</script>
+<script>
+    document.getElementById("theme-toggle").addEventListener("click", () => {
+        if (document.body.className.includes("dark")) {
+            document.body.classList.remove('dark');
+            localStorage.setItem("pref-theme", 'light');
+        } else {
+            document.body.classList.add('dark');
+            localStorage.setItem("pref-theme", 'dark');
+        }
+    })
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+  <section id="search-content" class="py-2">
+    <div class="container" id="search-results"></div>
+  </section>
+</body>
+
+</html>
