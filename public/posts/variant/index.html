@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script><meta charset="UTF-8">
+<head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta http-equiv="X-UA-Compatible" content="ie=edge">
 <meta http-equiv="Accept-CH" content="DPR, Viewport-Width, Width">
@@ -28,11 +28,10 @@
 
 
 
-<meta property="og:url" content="//localhost:1313/posts/variant/">
+<meta property="og:url" content="thaugdahl.no/posts/variant/">
   <meta property="og:site_name" content="Tor Andre Haugdahl">
   <meta property="og:title" content="C&#43;&#43; Variant From Scratch">
-  <meta property="og:description" content="C&#43;&#43; Variant From Scratch NOTE: As of 26. july, this post is still incomplete. I’m sure I’ll get around to it eventually. Don’t expect any kind of mind-blowing writing prowess to shine through just yet.
-For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
+  <meta property="og:description" content="C&#43;&#43; Variant From Scratch For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
 Your understanding of the STL deepens. Your template metaprogramming chops get their much needed exercise. You get your chance to make your sacrifice to the ever-benevolent standards library devs. By the end of this exercise you’re likely going to fall into one of two categories (insert there are 10 kinds of people joke here):">
   <meta property="og:locale" content="en_us">
   <meta property="og:type" content="article">
@@ -43,8 +42,7 @@ Your understanding of the STL deepens. Your template metaprogramming chops get t
 
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="C&#43;&#43; Variant From Scratch">
-  <meta name="twitter:description" content="C&#43;&#43; Variant From Scratch NOTE: As of 26. july, this post is still incomplete. I’m sure I’ll get around to it eventually. Don’t expect any kind of mind-blowing writing prowess to shine through just yet.
-For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
+  <meta name="twitter:description" content="C&#43;&#43; Variant From Scratch For quite some time now, I’ve been wanting to do a full-scale implementation of std::variant from scratch. Why would you want to put yourself through the torment, you ask? Here’s what I say:
 Your understanding of the STL deepens. Your template metaprogramming chops get their much needed exercise. You get your chance to make your sacrifice to the ever-benevolent standards library devs. By the end of this exercise you’re likely going to fall into one of two categories (insert there are 10 kinds of people joke here):">
 
 
@@ -179,7 +177,7 @@ C&#43;&#43; Variant From Scratch | Tor Andre Haugdahl
     <nav class="pt-3 navbar navbar-expand-lg ">
         <div class="container-fluid mx-xs-2 mx-sm-5 mx-md-5 mx-lg-5">
             
-            <a class="navbar-brand primary-font text-wrap" href="//localhost:1313/">
+            <a class="navbar-brand primary-font text-wrap" href="/thaugdahl.no">
                 
                 Tor Andre Haugdahl
                 
@@ -208,7 +206,7 @@ C&#43;&#43; Variant From Scratch | Tor Andre Haugdahl
 
                     
                     <li class="nav-item navbar-text">
-                        <a class="nav-link" href="//localhost:1313/#projects"
+                        <a class="nav-link" href="/thaugdahl.no#projects"
                             aria-label="projects">
                             Projects
                         </a>
@@ -226,7 +224,7 @@ C&#43;&#43; Variant From Scratch | Tor Andre Haugdahl
                     
                     
                     <li class="nav-item navbar-text">
-                        <a class="nav-link" href="/posts" title="Blog posts">
+                        <a class="nav-link" href="thaugdahl.no/posts" title="Blog posts">
                             
                             Blog
                         </a>
@@ -286,9 +284,6 @@ C&#43;&#43; Variant From Scratch | Tor Andre Haugdahl
           
           <article class="page-content  p-2">
           <h1 id="c-variant-from-scratch">C++ Variant From Scratch</h1>
-<blockquote>
-<p><strong>NOTE</strong>: As of 26. july, this post is still incomplete. I&rsquo;m sure I&rsquo;ll get
-around to it eventually. Don&rsquo;t expect any kind of mind-blowing writing prowess to shine through just yet.</p></blockquote>
 <p>For quite some time now, I&rsquo;ve been wanting to do a full-scale implementation
 of <code>std::variant</code> from scratch. Why would you want to put yourself through
 the torment, you ask? Here&rsquo;s what I say:</p>
@@ -305,6 +300,7 @@ the torment, you ask? Here&rsquo;s what I say:</p>
 <h2 id="the-anatomy-of-the-variant">The anatomy of the variant</h2>
 <ol>
 <li><strong>Storage:</strong> A variant type is, in the algebraic datatype world referred to as a tagged sum type. It can hold any of the constituent member types.</li>
+<li><strong>Utilities</strong>: To be able to interrogate the held type of the variant, we will add some simple functions to get information about the state of the variant.</li>
 <li><strong>Visitation:</strong> The infrastructure surrounding the variant type should enable the user to <em>visit</em> the variant with a sufficient <a href="/extras/overload-set">overload set</a>.</li>
 </ol>
 <p>We will go through both of these.</p>
@@ -327,43 +323,16 @@ largest of the types in the pack, and maintains the maximum alignment.</p>
 </span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>size_t active_index;
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e">//...
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>};
-</span></span></code></pre></div><p><em>Note</em>: In retrospect, I should have used <code>std::byte</code> instead of <code>char</code>. The two are close to equivalent (<code>std::byte</code> is unsigned), but <code>std::byte</code> is more descriptive.</p>
+</span></span></code></pre></div><p><em>Note</em>: In retrospect, I should have used <code>std::byte</code> instead of <code>char</code>. The two are close to equivalent (<code>std::byte</code> is unsigned), but <code>std::byte</code> is more descriptive and opaque.</p>
 <h4 id="initialization">Initialization</h4>
-<p>Every constructor and assignment is templated, and receives a specific type. If we want to be able to associated a unique identifier
-with each type of the variant, we have to ascertain its position in the top-level parameter pack.</p>
-<p>The templated utility class below will help us do so. It iteratively pops one type off the front of a pack until it encounters the
-desired type, at which point the value, or index, will be computed.</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, Desired, Types...<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, First, Types...<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> TypeIndex<span style="color:#f92672">&lt;</span>Desired, Types...<span style="color:#f92672">&gt;::</span>value;
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static_assert</span>(<span style="color:#f92672">!</span>is_same<span style="color:#f92672">&lt;</span>Desired, Desired<span style="color:#f92672">&gt;::</span>value, <span style="color:#e6db74">&#34;Can&#39;t find type in types pack&#34;</span>);
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></div><p>In addition, we are going to need the following utility as well:</p>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, First, Types...<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> First;
-</span></span><span style="display:flex;"><span>};
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span>Index, First, Types...<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Index<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, Types...<span style="color:#f92672">&gt;::</span>type;
-</span></span><span style="display:flex;"><span>};
-</span></span></code></pre></div><p>Now there are some more things to contend with. The first type of a variant should
+<p>Every constructor and assignment is templated, and receives a specific type. If
+we want to be able to associated a unique identifier with each type of the
+variant, we have to ascertain its position in the top-level parameter pack.
+Look at the <a href="#type-index">TypeIndex</a> utility. In addition to getting a type&rsquo;s
+index in a parameter pack, we also need to subscript &ndash; or extract &ndash; single
+types by their position in the parameter pack. This is achieved with the
+<a href="#type-pack-subscripting">TypeAt</a> utility.</p>
+<p>Now there are some more things to contend with. The first type of a variant should
 be default constructible. If we instantiate a variant without an initializer,
 we default back to default-instantiating the first type in the variant&rsquo;s type pack.</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>Variant() {
@@ -389,8 +358,8 @@ we default back to default-instantiating the first type in the variant&rsquo;s t
 </span></span><span style="display:flex;"><span>    active_index <span style="color:#f92672">=</span> type_index;
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>Assignment will now ensure that the variant&rsquo;s active index correctly identifies
-the contained type in the variant. There is one piece of functionality here that
-isn&rsquo;t clearly explained yet &ndash; the call to <code>destroy()</code>. Let&rsquo;s get into it.</p>
+the contained type in the variant. There is one piece of functionality here we
+haven&rsquo;t covered yet &ndash; the call to <code>destroy()</code>. Let&rsquo;s get into it.</p>
 <h4 id="destruction">Destruction</h4>
 <p>Our variant type should be able to correctly free its held resources. If the
 active type of the variant holds resources, we want to make sure we&rsquo;re respecting
@@ -433,11 +402,12 @@ There are two key features of this function that drives the whole dispatch machi
 <li>An array of indexed lambda functions, where</li>
 <li>each function casts the storage to the correct type</li>
 </ol>
-<p>Notice the last ellipsis at the end of the lambda function. The pack expansion
-will ensure that the <code>Indices</code> pack, which remains unexpanded inside the
-<code>TypeAt</code> selection, is expaned over the entirety of the lambda definition. As
-such, we are left with as many lambda functions as there are indices in the
-<code>Indices</code> pack.</p>
+<p>Notice the last ellipsis at the end of the lambda funtion. The <code>Indices</code> pack
+is unexpanded inside the lambda, and is more crucially used as a template
+argument for <code>TypeAt</code>. The effect of the ellipsis applied to the lambda is that
+the resulting pack expansion gives us one lambda for each constituent of the
+<code>Indices</code> pack. In each lambda, the <code>Indices</code> is thus expanded to yield the index of the
+type for which the <em>currently expanded</em> lambda should apply.</p>
 <p>Now that we have type-safe destruction, we can safely instantiate, and destroy
 a variant. This on its own isn&rsquo;t too interesting. Let&rsquo;s see how we can get
 around to actually <em>using</em> the data, shall we?</p>
@@ -447,6 +417,25 @@ The implementation herein uses many of the tricks that apply to generating
 destructor tables and visitation dispatch tables as can be seen both above and below.</p>
 <p>For brevity&rsquo;s sake, take a look at the copy and move constructors and
 assignment operators in the <a href="https://github.com/thaugdahl/variant-v2/blob/main/main.cpp">code repo</a>.</p>
+<h3 id="utilities">Utilities</h3>
+<p>Given an initialized variant, you may want to know whether the variant holds
+a specific type, or the index of the type in the variant&rsquo;s template pack. If
+your variant is moved-from, the variant may also be <em>valueless</em>. Observe the
+utilities below:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">is_valueless</span>() <span style="color:#66d9ef">const</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> active_index <span style="color:#f92672">==</span> <span style="color:#66d9ef">sizeof</span>...(Types);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>size_t index() <span style="color:#66d9ef">const</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> active_index;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">TypeT</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> holds_alternative() <span style="color:#66d9ef">const</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> active_index <span style="color:#f92672">==</span> TypeIndex<span style="color:#f92672">&lt;</span>TypeT, Types...<span style="color:#f92672">&gt;::</span>value;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>These utilities may be used for the free function formulation suggested
+in the next section.</p>
 <h3 id="visitation">Visitation</h3>
 <p>Cppreference has the following notes for <code>std::visit</code></p>
 <blockquote>
@@ -470,11 +459,198 @@ cases:</p>
 </ol>
 <p>In each case you should carefully consider how visitor functors (the callable
 visitor) and the variant&rsquo;s value are forwarded.</p>
-<h2 id="whats-missing">What&rsquo;s missing</h2>
+<p>The C++ standard added a member function for visitation to <code>std::variant</code> in
+C++26. Prior to this addition, visitation has been done with the free function
+<code>std::visit</code>. This implementation opts for a member function. If you opt for a
+free function, the process is mostly the same.</p>
+<p>We will consider <em>one</em> of the cv- and ref-qualified visitations.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_rvalue() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> make_visitor_dispatch_table_rvalue_impl<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(
+</span></span><span style="display:flex;"><span>        MakeIndexSequence<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">sizeof</span>...(Types)<span style="color:#f92672">&gt;</span>{});
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span>, std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> make_visitor_dispatch_table_rvalue_impl(IndexSequence<span style="color:#f92672">&lt;</span>Indices...<span style="color:#f92672">&gt;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> RetType <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">typename</span> FunctorReturnType<span style="color:#f92672">&lt;</span>Visitor,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Types...<span style="color:#f92672">&gt;::</span>type<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>array<span style="color:#f92672">&lt;</span>RetType (<span style="color:#f92672">*</span>)(<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>, Visitor <span style="color:#f92672">&amp;&amp;</span>), <span style="color:#66d9ef">sizeof</span>...(Indices)<span style="color:#f92672">&gt;</span>{
+</span></span><span style="display:flex;"><span>        [](<span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>data, Visitor <span style="color:#f92672">&amp;&amp;</span>v) {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">using</span> ActiveType <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Indices, Types...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v)(std<span style="color:#f92672">::</span>move(<span style="color:#f92672">*</span><span style="color:#66d9ef">reinterpret_cast</span><span style="color:#f92672">&lt;</span>ActiveType <span style="color:#f92672">*&gt;</span>(data)));
+</span></span><span style="display:flex;"><span>        }...};
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Visitor</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">decltype</span>(<span style="color:#66d9ef">auto</span>) visit(Visitor <span style="color:#f92672">&amp;&amp;</span>v) <span style="color:#f92672">&amp;&amp;</span> {
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> ( is_valueless() ) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>runtime_error{<span style="color:#e6db74">&#34;Invalid variant access. Valueless.&#34;</span>};
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> <span style="color:#66d9ef">auto</span> dispatch_table_rvalue <span style="color:#f92672">=</span>
+</span></span><span style="display:flex;"><span>        make_visitor_dispatch_table_rvalue<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> dispatch_table_rvalue[active_index](storage,
+</span></span><span style="display:flex;"><span>                                               std<span style="color:#f92672">::</span>forward<span style="color:#f92672">&lt;</span>Visitor<span style="color:#f92672">&gt;</span>(v));
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Now we&rsquo;re getting into some deeper uses of template metaprogramming. Let&rsquo;s go
+for a walk through the code.</p>
+<p><strong><code>visit()</code></strong></p>
+<p>The last function, <code>visit</code> is ref-qualified for an rvalue-instance of
+<code>variant</code>. This means that at the use-site of the visitation, the variant is
+either expiring as an <code>xvalue</code>, or it is materialized as a pure rvalue (through
+a copy-elided return or an otherwise immediately initialized variant). An example
+of a case where this overload is selected can be seen here:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>Variant<span style="color:#f92672">&lt;</span>A, B<span style="color:#f92672">&gt;</span> get_variant() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> {A{}}; <span style="color:#75715e">// Copy-list initialization. The returned variant holds an A.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">use_variant</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// get_variant() yields a prvalue
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    get_variant().visit([](<span style="color:#66d9ef">auto</span> x) { <span style="color:#75715e">/* Use variant value */</span> }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p><strong>make_visitor_dispatch_table_rvalue()</strong></p>
+<p>This function instantiates an index sequence for parameter-pack indexing. It
+immediately delegates actual construction  of the dispatch table to an
+implementation function.</p>
+<p><strong>make_visitor_dispatch_table_rvalue_impl()</strong></p>
+<p>If we want our visitation to be able to return a value, we should figure out
+the return type of the visitor functor. No matter the overload set, the return type
+must be consistent over all the possible ways the visitor functor can be invoked over
+the variant. In other words, if one visitor returns <code>int</code>, then all visitors in the same
+<code>visit</code> call must also return <code>int</code>. In this case, we use <code>decltype</code> to figure out
+the return type of the visitor invoked on the first type of the <code>Variant</code> pack, and assume
+the rest of the invocations also return the same type. The <code>FunctorReturnType</code> definition can be seen here:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Functor</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Params</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">FunctorReturnType</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> <span style="color:#66d9ef">decltype</span>(declval<span style="color:#f92672">&lt;</span>Functor<span style="color:#f92672">&gt;</span>()(declval<span style="color:#f92672">&lt;</span>Params<span style="color:#f92672">&gt;</span>()...));
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p><code>declval</code> is a compile-time only function whose return type is a reference to
+an instance of the passed template parameter. The first parameter is the
+functor itself, so we invoke the functor on the parameters using the same
+<code>declval</code> trick. The parameter pack expansion will more or less yield something
+like <code>decltype(f(a,b,c,d,...))</code>, which is going to yield the return type of the
+function itself.</p>
+<p>Now, using the same method as was used in the destructor table, we create a
+table of lambdas that correctly cast the type of the held value, and invokes
+the visitor on a <strong>moved</strong> (or rvalue-cast) value. This should coincide
+correctly with the move-semantics of the use-site. If you recall, we are
+invoking <code>visit</code> on an <code>xvalue</code> or <code>prvalue</code> &ndash; the held value is likely going
+to be destroyed anyway.</p>
+<p>If you want your variant to cover all const and ref-qualifiers, you need to set up
+the visitation infrastructure three more times over. There are probably more succinct
+ways of doing this, such as a compile-time overload selection in the <code>visit</code> function with
+a <em>deducing this</em>. In this case however, we aren&rsquo;t concerning ourselves with the luxuries
+of C++20 and beyond.</p>
+<h2 id="type-and-metaprogramming-utilities">Type and Metaprogramming Utilities</h2>
+<p>The following metaprogramming utilities are used throughout this project. They
+are hand-rolled, and there exist STL counterparts. I recommend using the STL counterparts.
+The hand-rolled versions are here for your reading (dis-)pleasure</p>
+<h3 id="index-sequence">Index Sequence</h3>
+<p>We want to be able to hold a sequence of numbers for use with template argument
+matching. <code>IndexSequence</code> is a simple templated struct which can be specialized for
+any order and count of numbers.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Indices<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">IndexSequence</span> {};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t I1, std<span style="color:#f92672">::</span>size_t... Rest<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">IndexSequenceImpl</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> IndexSequenceImpl<span style="color:#f92672">&lt;</span>I1 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, I1 <span style="color:#f92672">-</span> <span style="color:#ae81ff">1</span>, Rest...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t... Rest<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">IndexSequenceImpl</span><span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, Rest...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> IndexSequence<span style="color:#f92672">&lt;</span>Rest...<span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t I<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">using</span> MakeIndexSequence <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> IndexSequenceImpl<span style="color:#f92672">&lt;</span>I<span style="color:#f92672">&gt;::</span>type;
+</span></span></code></pre></div><p>The machinery is quite simple.</p>
+<ol>
+<li>Recursive case: The entire pack of <code>size_t</code> is split into a head and a tail.
+We reproduce the tail in its entirety, and add two singly decremented heads.</li>
+<li>Base case: When the head of the parameter pack is <code>0</code>, we terminate the
+recursion, and yield only the tail.</li>
+</ol>
+<p>Here is a simple illustration of how it works:</p>
 <ul>
-<li>Strong Exception Guarantees</li>
-<li>Proper SFINAE Handling</li>
+<li><em>Step 1</em>: <code>5</code></li>
+<li><em>Step 2</em>: <code>4 4 5</code></li>
+<li><em>Step 3</em>: <code>3 3 4 5</code></li>
+<li><em>Step 4</em>: <code>2 2 3 4 5</code></li>
+<li><em>Step 5</em>: <code>1 1 2 3 4 5</code></li>
+<li><em>Step 6</em>: <code>0 0 1 2 3 4 5</code></li>
+<li><em>Step 7</em>: <code>0 1 2 3 4 5</code></li>
 </ul>
+<p>The reproduction of the head twice-over allows us to discard the leading <code>0</code> in
+the base case, and be left with a neatly organized sequence. The base case also
+forwards the final tail pack to <code>IndexSequence</code> and yields the final wrapped
+sequence.</p>
+<p><code>IndexSequence</code> and its parameter pack is used multiple times over in the implementation
+of a <code>Variant</code>. It allows for proper indexing of the variant&rsquo;s parameter pack.</p>
+<h3 id="type-index">Type Index</h3>
+<p>Given a parameter pack of types, we may want to know at which position a
+specific type occurs. This is achieved by the <code>TypeIndex</code> utility.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, Desired, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t value <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> TypeIndex<span style="color:#f92672">&lt;</span>Desired, Types...<span style="color:#f92672">&gt;::</span>value;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static_assert</span>(<span style="color:#f92672">!</span>is_same<span style="color:#f92672">&lt;</span>Desired, Desired<span style="color:#f92672">&gt;::</span>value, <span style="color:#e6db74">&#34;Can&#39;t find type in types pack&#34;</span>);
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>If you inspect the implementation, you will see that we&rsquo;re stripping off the
+types in the variadic pack one by one until the leading parameter and the
+subsequent parameter match. At this point we&rsquo;ve incrementally built up the
+index until the base-case is encountered. As a result <code>TypeIndex&lt;...&gt;::value</code>
+will yield the correct index.</p>
+<h3 id="type-pack-subscripting">Type Pack Subscripting</h3>
+<p>In absence of built-in parameter pack indexing support from C++26,
+we&rsquo;re going to have to resort to this nifty utility.</p>
+<p>In this utility we&rsquo;re decrementing the <code>Index</code> parameter and stripping types
+one-by-one off the parameter pack until the <code>Index</code> is <code>0</code>.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span><span style="color:#ae81ff">0</span>, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> First;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>size_t Index, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeAt</span><span style="color:#f92672">&lt;</span>Index, First, Types...<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">using</span> type <span style="color:#f92672">=</span> <span style="color:#66d9ef">typename</span> TypeAt<span style="color:#f92672">&lt;</span>Index<span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>, Types...<span style="color:#f92672">&gt;::</span>type;
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><h2 id="whats-missing">What&rsquo;s missing</h2>
+<p>This variant implementation does not give strong exception guarantees. I may at
+some point make a follow-up article covering strong exception guarantees and how
+they may be added to this <code>Variant</code> implementation.</p>
+<p>The hand-rolled metaprogramming utilities could also benefit from stronger
+SFINAE-handling. They may yield some painfully esoteric error messages if used
+incorrectly.</p>
+<h2 id="key-takeaways">Key Takeaways</h2>
+<p>In this post, we&rsquo;ve covered a feature-rich <code>Variant</code> implementation that tries
+its best to mimic the STL <code>variant</code>. We&rsquo;ve covered the reason for the purpose of
+the variant type, and how it may be implemented in an efficient manner.</p>
+<p>I want to pay my respects to Klaus Iglberger for his fantastic coverage of the
+Visitor design pattern at CppCon 2022. It is likely the video that sparked my
+interest for <code>std::variant</code> back in 2022. I am happy to finally have gotten around
+to my medium to large-scale implementation. I enthusiastically encourage people
+to watch <a href="https://www.youtube.com/watch?v=PEcy1vYHb8A">this video</a>.</p>
+<p>On a more critical note, if you ever feel like reinventing the wheel, avoid the
+Ixian hubris of putting yourself above the STL. Being condemned to the Ixian
+wheel because of critical issues in production is rarely worth it <sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>.</p>
 <h2 id="final-code">Final Code</h2>
 <p>By now, our variant can hold any type, and invoke the visitor in as few
 indirections as we can get without digging into the compiler&rsquo;s internals.
@@ -482,6 +658,14 @@ In real-world projects, use <code>std::variant</code> instead of our bastardized
 as you will most certainly get an implementation that is battle-tested and has
 compiler support.</p>
 <p>The complete repository can be found on <a href="https://github.com/thaugdahl/variant-v2">GitHub</a>.</p>
+<div class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p>Ixion—condemned in Greek myth to spin on an eternal wheel for his transgressions—serves as a warning against overreaching&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</div>
 
           </article>
         </div>
@@ -499,10 +683,19 @@ compiler support.</p>
     <li><a href="#the-anatomy-of-the-variant">The anatomy of the variant</a>
       <ul>
         <li><a href="#storage">Storage</a></li>
+        <li><a href="#utilities">Utilities</a></li>
         <li><a href="#visitation">Visitation</a></li>
       </ul>
     </li>
+    <li><a href="#type-and-metaprogramming-utilities">Type and Metaprogramming Utilities</a>
+      <ul>
+        <li><a href="#index-sequence">Index Sequence</a></li>
+        <li><a href="#type-index">Type Index</a></li>
+        <li><a href="#type-pack-subscripting">Type Pack Subscripting</a></li>
+      </ul>
+    </li>
     <li><a href="#whats-missing">What&rsquo;s missing</a></li>
+    <li><a href="#key-takeaways">Key Takeaways</a></li>
     <li><a href="#final-code">Final Code</a></li>
   </ul>
 </nav>
@@ -518,22 +711,22 @@ compiler support.</p>
             <div class="social-content">
               <ul class="list-inline">
                 <li class="list-inline-item text-center">
-                  <a target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&url=%2f%2flocalhost%3a1313%2fposts%2fvariant%2f">
+                  <a target="_blank" href="https://www.linkedin.com/shareArticle?mini=true&url=thaugdahl.no%2fthaugdahl.no%2fposts%2fvariant%2f">
                     <i class="fab fa-linkedin"></i>
                   </a>
                 </li>
                 <li class="list-inline-item text-center">
-                  <a target="_blank" href="https://twitter.com/share?text=C%2b%2b%20Variant%20From%20Scratch&url=%2f%2flocalhost%3a1313%2fposts%2fvariant%2f">
+                  <a target="_blank" href="https://twitter.com/share?text=C%2b%2b%20Variant%20From%20Scratch&url=thaugdahl.no%2fthaugdahl.no%2fposts%2fvariant%2f">
                     <i class="fab fa-twitter"></i>
                   </a>
                 </li>
                 <li class="list-inline-item text-center">
-                  <a target="_blank" href="https://api.whatsapp.com/send?text=C%2b%2b%20Variant%20From%20Scratch: %2f%2flocalhost%3a1313%2fposts%2fvariant%2f">
+                  <a target="_blank" href="https://api.whatsapp.com/send?text=C%2b%2b%20Variant%20From%20Scratch: thaugdahl.no%2fthaugdahl.no%2fposts%2fvariant%2f">
                     <i class="fab fa-whatsapp"></i>
                   </a>
                 </li>
                 <li class="list-inline-item text-center">
-                  <a target="_blank" href='mailto:?subject=C%2b%2b%20Variant%20From%20Scratch&amp;body=Check%20out%20this%20site %2f%2flocalhost%3a1313%2fposts%2fvariant%2f'>
+                  <a target="_blank" href='mailto:?subject=C%2b%2b%20Variant%20From%20Scratch&amp;body=Check%20out%20this%20site thaugdahl.no%2fthaugdahl.no%2fposts%2fvariant%2f'>
                     <i class="fa fa-envelope"></i>
                   </a>
                 </li>
@@ -612,46 +805,22 @@ compiler support.</p>
             <div class="card h-100">
                 
                 <div class="card-body bg-transparent p-3 shadow-sm">
-                    <a href="/posts/variant/" class="primary-font card-title">
+                    <a href="thaugdahl.no/posts/variant/" class="primary-font card-title">
                         <h5 class="card-title bg-transparent" title="C&#43;&#43; Variant From Scratch">C++ Variant From Scratch</h5>
                     </a>
                     <div class="card-text secondary-font">
                         <p><h1 id="c-variant-from-scratch">C++ Variant From Scratch</h1>
-<blockquote>
-<p><strong>NOTE</strong>: As of 26. july, this post is still incomplete. I&rsquo;m sure I&rsquo;ll get
-around to it eventually. Don&rsquo;t expect any kind of mind-blowing writing prowess to shine through just yet.</p></blockquote>
-<p>For quite some time now, I&rsquo;ve been wanting to do a full-scale …</p></p>
+<p>For quite some time now, I&rsquo;ve been wanting to do a full-scale implementation
+of <code>std::variant</code> from scratch. Why would you want to put yourself through
+the torment, you ask? Here&rsquo;s what I say:</p>
+<ol>
+<li>Your understanding of the STL deepens.</li>
+<li>Your template metaprogramming …</li></ol></p>
                     </div>
                 </div>
                 <div class="mt-auto card-footer">
                     <span class="float-start">July 26, 2025</span>
-                    <a href="/posts/variant/" class="float-end btn btn-outline-info btn-sm">Read</a>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-4 col-md-6 pt-2">
-            <div class="card h-100">
-                
-                <div class="card-body bg-transparent p-3 shadow-sm">
-                    <a href="/posts/hello/" class="primary-font card-title">
-                        <h5 class="card-title bg-transparent" title="Hello">Hello</h5>
-                    </a>
-                    <div class="card-text secondary-font">
-                        <p><h1 id="introduction">Introduction</h1>
-<p>Welcome to my humble technical blog.</p>
-<h2 id="cpp-code-fence-test">CPP Code Fence Test</h2>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span>;
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Desired</span>, <span style="color:#66d9ef">class</span> <span style="color:#a6e22e">First</span>, <span style="color:#66d9ef">class</span><span style="color:#960050;background-color:#1e0010">... </span><span style="color:#a6e22e">Types</span><span style="color:#f92672">&gt;</span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TypeIndex</span><span style="color:#f92672">&lt;</span>Desired, First, Types...<span style="color:#f92672">&gt;</span> {
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">constexpr</span> std<span style="color:#f92672">::</span>size_t index <span style="color:#f92672">=</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+ …</span></span></span></span></span></span></span></span></span></span></span></span></span></code></pre></div></p>
-                    </div>
-                </div>
-                <div class="mt-auto card-footer">
-                    <span class="float-start">July 26, 2025</span>
-                    <a href="/posts/hello/" class="float-end btn btn-outline-info btn-sm">Read</a>
+                    <a href="thaugdahl.no/posts/variant/" class="float-end btn btn-outline-info btn-sm">Read</a>
                 </div>
             </div>
         </div>
